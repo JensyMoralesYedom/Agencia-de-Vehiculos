@@ -1,8 +1,10 @@
 let editandoCodigo = null;
+let filtroBusqueda = '';
 
 document.addEventListener('DOMContentLoaded', function () {
     const form = document.getElementById('vehiculoForm');
     const btnCancelar = document.getElementById('btnCancelar');
+    const buscador = document.getElementById('buscador');
 
     form.addEventListener('submit', function (e) {
         e.preventDefault();
@@ -15,7 +17,14 @@ document.addEventListener('DOMContentLoaded', function () {
 
     btnCancelar.addEventListener('click', cancelarEdicion);
 
+    buscador.addEventListener('input', function () {
+        filtroBusqueda = this.value.trim().toLowerCase();
+        mostrarVehiculos();
+    });
+
+    initIntersectionObserver();
     mostrarVehiculos();
+    mostrarDestacado();
 });
 
 function guardarVehiculo() {
@@ -33,6 +42,7 @@ function guardarVehiculo() {
     localStorage.setItem('vehiculo_' + datos.codigo, JSON.stringify(datos));
     document.getElementById('vehiculoForm').reset();
     mostrarVehiculos();
+    mostrarDestacado();
 }
 
 function actualizarVehiculo() {
@@ -52,6 +62,7 @@ function actualizarVehiculo() {
 
     cancelarEdicion();
     mostrarVehiculos();
+    mostrarDestacado();
 }
 
 function obtenerDatosFormulario() {
@@ -97,35 +108,50 @@ function validarDatos(d) {
 function mostrarVehiculos() {
     const tbody = document.getElementById('tablaVehiculos');
     const vacio = document.getElementById('mensajeVacio');
+    const countEl = document.getElementById('catalogoCount');
     tbody.innerHTML = '';
 
-    const vehiculos = obtenerTodos();
+    let vehiculos = obtenerTodos();
+
+    if (filtroBusqueda) {
+        vehiculos = vehiculos.filter(function (v) {
+            return v.codigo.toLowerCase().includes(filtroBusqueda) ||
+                   v.marca.toLowerCase().includes(filtroBusqueda);
+        });
+    }
 
     if (vehiculos.length === 0) {
         vacio.classList.remove('hidden');
+        if (filtroBusqueda) {
+            vacio.querySelector('p').textContent = 'Sin resultados para "' + filtroBusqueda + '"';
+            vacio.querySelector('span').textContent = 'Intenta con otro término de búsqueda';
+        } else {
+            vacio.querySelector('p').textContent = 'No hay vehículos registrados';
+            vacio.querySelector('span').textContent = 'Usa el formulario para agregar el primero';
+        }
+        countEl.textContent = '0 vehículos registrados';
         return;
     }
 
     vacio.classList.add('hidden');
 
+    const total = vehiculos.length;
+    const totalStock = vehiculos.reduce(function (sum, v) { return sum + v.cantidad; }, 0);
+    countEl.textContent = total + ' vehículo' + (total !== 1 ? 's' : '') + ' registrado' + (total !== 1 ? 's' : '') + ' (' + totalStock + ' en stock)';
+
     vehiculos.forEach(function (v) {
         const tr = document.createElement('tr');
-        tr.innerHTML = `
-            <td><strong>${escapeHtml(v.codigo)}</strong></td>
-            <td>${escapeHtml(v.marca)}</td>
-            <td>${escapeHtml(v.modelo)}</td>
-            <td>${v.anio}</td>
-            <td><span style="display:inline-block;width:14px;height:14px;border-radius:4px;background:${colorToHex(v.color)};vertical-align:middle;margin-right:6px;border:1px solid #e2e8f0;"></span>${escapeHtml(v.color)}</td>
-            <td><span class="badge badge-${slugify(v.combustible)}">${escapeHtml(v.combustible)}</span></td>
-            <td class="price">$${formatearPrecio(v.precio)}</td>
-            <td>${v.cantidad}</td>
-            <td>
-                <div class="acciones">
-                    <button class="btn-accion btn-editar" onclick="editarVehiculo('${escapeHtml(v.codigo)}')">Editar</button>
-                    <button class="btn-accion btn-eliminar" onclick="eliminarVehiculo('${escapeHtml(v.codigo)}')">Eliminar</button>
-                </div>
-            </td>
-        `;
+        tr.innerHTML = [
+            '<td><strong>' + escapeHtml(v.codigo) + '</strong></td>',
+            '<td>' + escapeHtml(v.marca) + '</td>',
+            '<td>' + escapeHtml(v.modelo) + '</td>',
+            '<td>' + v.anio + '</td>',
+            '<td><span style="display:inline-block;width:14px;height:14px;border-radius:4px;background:' + colorToHex(v.color) + ';vertical-align:middle;margin-right:6px;border:1px solid #e2e8f0;"></span>' + escapeHtml(v.color) + '</td>',
+            '<td><span class="badge badge-' + slugify(v.combustible) + '">' + escapeHtml(v.combustible) + '</span></td>',
+            '<td class="price">$' + formatearPrecio(v.precio) + '</td>',
+            '<td>' + v.cantidad + '</td>',
+            '<td><div class="acciones"><button class="btn-accion btn-editar" onclick="editarVehiculo(\'' + escapeHtml(v.codigo) + '\')">Editar</button><button class="btn-accion btn-eliminar" onclick="eliminarVehiculo(\'' + escapeHtml(v.codigo) + '\')">Eliminar</button></div></td>'
+        ].join('');
         tbody.appendChild(tr);
     });
 }
@@ -137,9 +163,7 @@ function obtenerTodos() {
         if (key && key.startsWith('vehiculo_')) {
             try {
                 vehiculos.push(JSON.parse(localStorage.getItem(key)));
-            } catch (e) {
-                // skip corrupted entry
-            }
+            } catch (e) {}
         }
     }
     vehiculos.sort(function (a, b) {
@@ -152,6 +176,7 @@ function eliminarVehiculo(codigo) {
     if (confirm('¿Estás seguro de eliminar el vehículo con código "' + codigo + '"?')) {
         localStorage.removeItem('vehiculo_' + codigo);
         mostrarVehiculos();
+        mostrarDestacado();
     }
 }
 
@@ -203,6 +228,43 @@ function formatearPrecio(n) {
     return n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
+function mostrarDestacado() {
+    const vehiculos = obtenerTodos();
+    const body = document.getElementById('heroCardBody');
+
+    if (vehiculos.length === 0) {
+        body.innerHTML = [
+            '<div class="hero-card-placeholder">',
+            '<svg width="48" height="48" viewBox="0 0 64 64" fill="none">',
+            '<rect width="64" height="64" rx="16" fill="rgba(255,255,255,0.08)"/>',
+            '<path d="M20 36L22 28H42L44 36H20Z" fill="rgba(255,255,255,0.2)"/>',
+            '<circle cx="25" cy="36" r="3" fill="rgba(255,255,255,0.2)"/>',
+            '<circle cx="39" cy="36" r="3" fill="rgba(255,255,255,0.2)"/>',
+            '<path d="M22 32H42" stroke="rgba(255,255,255,0.15)" stroke-width="2"/>',
+            '</svg>',
+            '<p class="hero-card-placeholder-text">Registra tu primer vehículo</p>',
+            '</div>'
+        ].join('');
+        return;
+    }
+
+    const v = vehiculos[Math.floor(Math.random() * vehiculos.length)];
+
+    body.innerHTML = [
+        '<div class="hero-card-vehicle">',
+        '<div class="hero-card-model">' + escapeHtml(v.modelo) + '</div>',
+        '<div class="hero-card-brand">' + escapeHtml(v.marca) + '</div>',
+        '<div class="hero-card-specs">',
+        '<div class="hero-card-spec"><span class="hero-card-spec-label">Año</span><span class="hero-card-spec-value">' + v.anio + '</span></div>',
+        '<div class="hero-card-spec"><span class="hero-card-spec-label">Precio</span><span class="hero-card-spec-value price">$' + formatearPrecio(v.precio) + '</span></div>',
+        '<div class="hero-card-spec"><span class="hero-card-spec-label">Color</span><span class="hero-card-spec-value">' + escapeHtml(v.color) + '</span></div>',
+        '<div class="hero-card-spec"><span class="hero-card-spec-label">Stock</span><span class="hero-card-spec-value">' + v.cantidad + '</span></div>',
+        '</div>',
+        '<a href="#catalogo" class="hero-card-link">Ver en catálogo &rarr;</a>',
+        '</div>'
+    ].join('');
+}
+
 function colorToHex(color) {
     const map = {
         rojo: '#ef4444', red: '#ef4444',
@@ -241,4 +303,42 @@ function escapeHtml(str) {
     const div = document.createElement('div');
     div.textContent = str;
     return div.innerHTML;
+}
+
+function initIntersectionObserver() {
+    const sections = document.querySelectorAll('section[data-section]');
+    const navLinks = document.querySelectorAll('.nav-link');
+    const animatedEls = document.querySelectorAll('.animate-in');
+
+    const sectionObserver = new IntersectionObserver(function (entries) {
+        entries.forEach(function (entry) {
+            if (entry.isIntersecting) {
+                const id = entry.target.getAttribute('data-section');
+                navLinks.forEach(function (link) {
+                    link.classList.toggle('active', link.getAttribute('href') === '#' + id);
+                });
+            }
+        });
+    }, {
+        threshold: 0.4
+    });
+
+    sections.forEach(function (s) {
+        sectionObserver.observe(s);
+    });
+
+    const animObserver = new IntersectionObserver(function (entries) {
+        entries.forEach(function (entry) {
+            if (entry.isIntersecting) {
+                entry.target.classList.add('visible');
+                animObserver.unobserve(entry.target);
+            }
+        });
+    }, {
+        threshold: 0.15
+    });
+
+    animatedEls.forEach(function (el) {
+        animObserver.observe(el);
+    });
 }

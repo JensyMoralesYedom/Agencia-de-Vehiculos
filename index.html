@@ -20,30 +20,60 @@
             <span>AutoMax</span>
         </div>
         <nav>
-            <a href="#inicio">Inicio</a>
-            <a href="#formulario">Registrar</a>
-            <a href="#catalogo">Catálogo</a>
+            <a href="#inicio" class="nav-link active">Inicio</a>
+            <a href="#formulario" class="nav-link">Registrar</a>
+            <a href="#catalogo" class="nav-link">Catálogo</a>
         </nav>
     </header>
 
-    <section id="inicio">
+    <section id="inicio" data-section="inicio">
         <div class="hero">
+            <div class="hero-bg-shapes">
+                <div class="hero-circle hero-circle-1"></div>
+                <div class="hero-circle hero-circle-2"></div>
+                <div class="hero-circle hero-circle-3"></div>
+            </div>
             <div class="hero-content">
-                <h1>AutoMax</h1>
-                <p>Encuentra el vehículo ideal para cada camino</p>
-                <a href="#formulario" class="btn-hero">Registrar Vehículo</a>
+                <div class="hero-text">
+                    <p class="hero-badge">Concesionario oficial</p>
+                    <h1>AutoMax</h1>
+                    <p class="hero-sub">Encuentra el vehículo ideal para cada camino</p>
+                    <a href="#formulario" class="btn-hero">Registrar Vehículo</a>
+                </div>
+                <div class="hero-visual">
+                    <div class="hero-card" id="heroDestacado">
+                        <div class="hero-card-shine"></div>
+                        <div class="hero-card-header">
+                            <span class="hero-card-badge">Destacado</span>
+                            <span class="hero-card-icon">&#9733;</span>
+                        </div>
+                        <div class="hero-card-body" id="heroCardBody">
+                            <div class="hero-card-placeholder">
+                                <svg width="48" height="48" viewBox="0 0 64 64" fill="none">
+                                    <rect width="64" height="64" rx="16" fill="rgba(255,255,255,0.08)"/>
+                                    <path d="M20 36L22 28H42L44 36H20Z" fill="rgba(255,255,255,0.2)"/>
+                                    <circle cx="25" cy="36" r="3" fill="rgba(255,255,255,0.2)"/>
+                                    <circle cx="39" cy="36" r="3" fill="rgba(255,255,255,0.2)"/>
+                                    <path d="M22 32H42" stroke="rgba(255,255,255,0.15)" stroke-width="2"/>
+                                </svg>
+                                <p class="hero-card-placeholder-text">Registra tu primer vehículo</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
             <div class="hero-shape"></div>
         </div>
     </section>
 
-    <section id="formulario">
+    <section id="formulario" data-section="formulario">
+        <div class="section-bg"></div>
         <div class="container">
             <div class="section-title">
                 <h2>Registrar Vehículo</h2>
                 <p>Ingresa los datos del vehículo nuevo</p>
             </div>
-            <div class="form-card">
+            <div class="form-card animate-in">
                 <form id="vehiculoForm">
                     <div class="form-grid">
                         <div class="form-group">
@@ -99,13 +129,20 @@
         </div>
     </section>
 
-    <section id="catalogo">
+    <section id="catalogo" data-section="catalogo">
         <div class="container">
             <div class="section-title">
                 <h2>Catálogo de Vehículos</h2>
-                <p>Vehículos registrados disponibles para la venta</p>
+                <p id="catalogoCount">Vehículos registrados disponibles para la venta</p>
             </div>
-            <div class="table-card">
+            <div class="table-card animate-in">
+                <div class="search-bar">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2">
+                        <circle cx="11" cy="11" r="8"/>
+                        <path d="M21 21L16.65 16.65"/>
+                    </svg>
+                    <input type="text" id="buscador" placeholder="Buscar por código o marca..." autocomplete="off">
+                </div>
                 <div class="table-wrapper">
                     <table>
                         <thead>
